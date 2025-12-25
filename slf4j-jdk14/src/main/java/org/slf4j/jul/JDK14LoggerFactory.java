@@ -26,7 +26,10 @@ package org.slf4j.jul;
 
 import org.slf4j.Logger;
 import org.slf4j.ILoggerFactory;
+import org.slf4j.helpers.DecoratorResolver;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -45,6 +48,7 @@ public class JDK14LoggerFactory implements ILoggerFactory {
      * the root logger is called "" in JUL
      */
     private static String JUL_ROOT_LOGGER_NAME = "";
+    private static Map<String, DecoratorResolver> decorator = new HashMap<>();
     
     public JDK14LoggerFactory() {
         loggerMap = new ConcurrentHashMap<>();
@@ -52,6 +56,24 @@ public class JDK14LoggerFactory implements ILoggerFactory {
         // note that call to java.util.logging.LogManager.getLogManager() fails on the Google App Engine platform. See
         // SLF4J-363
         java.util.logging.Logger.getLogger("");
+    }
+
+
+    /**
+     * Registers a replacement/prefix for logger.<br>
+     * Some examples:<br>
+     * <br>
+     * java.util.* - Java -> java.util.logging.Logger = Java.Logger<br>
+     * java.util.*~ - Java -> java.util.logging.Logger = Java.logging.Logger<br>
+     * java.util.logging.Logger - null -> java.util.logging.Level = java.util.logging.Level<br>
+     * java.util.logging.Logger - null -> java.util.logging.Logger = Logger
+     *
+     * @param start the start of the class
+     * @param replacement the replacement to use
+     * @return true if no other value with the same existed
+     */
+    public static boolean registerDecorator(String start, String replacement) {
+        return DecoratorResolver.registerTo(decorator, start, replacement);
     }
 
     /*
@@ -64,6 +86,8 @@ public class JDK14LoggerFactory implements ILoggerFactory {
         if (name.equalsIgnoreCase(Logger.ROOT_LOGGER_NAME)) {
             name = JUL_ROOT_LOGGER_NAME;
         }
+
+        name = DecoratorResolver.resolve(decorator, name);
 
         Logger slf4jLogger = loggerMap.get(name);
         if (slf4jLogger != null)
