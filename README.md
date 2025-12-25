@@ -1,3 +1,8 @@
+# About this fork
+This fork is for personal use since I needed to decorate some loggers, nothing serious!
+
+In most cases use the official SLF4J instead. (https://github.com/qos-ch/slf4j)
+
 # About SLF4J
 
 The Simple Logging Facade for Java (SLF4J) serves as a simple facade
